@@ -19,13 +19,13 @@ A lightweight installer for [Flyline](https://github.com/HalFrgrd/flyline), cust
 Run the following command in a terminal as your regular user:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/user/repo/main/script.sh | sh
+curl -fsSL https://raw.githubusercontent.com/g0nd1/bashing/main/script.sh | sh
 ```
 
 Alternatively, download and inspect the installer before executing it:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/user/repo/main/script.sh -o script.sh
+curl -fsSL https://raw.githubusercontent.com/g0nd1/bashing/main/script.sh -o script.sh
 less script.sh
 sh script.sh
 ```
