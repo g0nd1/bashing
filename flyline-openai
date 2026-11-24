@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/flyline-ai.env"
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "Error: Configuration file not found: $CONFIG_FILE" >&2
+    exit 1
+fi
+
+# Load configuration only inside this process.
+set -a
+# shellcheck disable=SC1090
+source "$CONFIG_FILE"
+set +a
+
+: "${FLYLINE_AI_BASE_URL:?FLYLINE_AI_BASE_URL is not configured}"
+: "${FLYLINE_AI_API_KEY:?FLYLINE_AI_API_KEY is not configured}"
+: "${FLYLINE_AI_MODEL:?FLYLINE_AI_MODEL is not configured}"
+
+prompt="${1:?Missing prompt}"
+
+response="$(
+    curl --fail --silent --show-error \
+        "${FLYLINE_AI_BASE_URL%/}/chat/completions" \
+        -H "Authorization: Bearer ${FLYLINE_AI_API_KEY}" \
+        -H "Content-Type: application/json" \
+        --data "$(jq -n \
+            --arg model "$FLYLINE_AI_MODEL" \
+            --arg prompt "$prompt" \
+            '{
+                model: $model,
+                messages: [
+                    {
+                        role: "user",
+                        content: $prompt
+                    }
+                ],
+                temperature: 0
+            }')"
+)"
+
+jq -er '.choices[0].message.content' <<<"$response"

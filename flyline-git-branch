@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+branch=$(git branch --show-current 2>/dev/null) || branch=""
+
+if [[ -n "$branch" && "$branch" != "main" ]]; then
+    # White → light green
+    printf '\e[48;2;191;241;182m\e[38;2;252;252;252m'
+
+    # Branch: black text on light green
+    printf '\e[38;2;0;0;0m  %s ' "$branch"
+
+    # Light green → blue
+    printf '\e[48;2;29;153;243m\e[38;2;191;241;182m'
+else
+    # White → blue (no branch segment)
+    printf '\e[48;2;29;153;243m\e[38;2;252;252;252m'
+fi
+
+# White text for directory path
+printf '\e[38;2;252;252;252m'
