@@ -92,6 +92,39 @@ fi
 # END FLYLINE EXTENSION
 BASHRC
     fi
+
+
+    echo '[5/5] Nerd Font installieren ...'
+    FONT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/NotoNerdFont"
+    FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Noto.tar.xz"
+
+    if ! command -v fc-cache >/dev/null 2>&1 ||
+    ! command -v xz >/dev/null 2>&1; then
+
+        echo 'Warnung: fontconfig oder xz fehlt. Schriftinstallation übersprungen.'
+
+    elif [ -f "$FONT_DIR/.installed" ]; then
+
+        echo 'Noto Nerd Font ist bereits installiert.'
+
+    else
+        mkdir -p "$FONT_DIR"
+
+        if curl -fsSL \
+            --connect-timeout 10 \
+            --max-time 180 \
+            "$FONT_URL" -o "$TMP/Noto.tar.xz" &&
+            tar -xJf "$TMP/Noto.tar.xz" -C "$FONT_DIR" &&
+            fc-cache -f "$FONT_DIR"; then
+
+            touch "$FONT_DIR/.installed"
+            echo 'Noto Nerd Font erfolgreich installiert.'
+
+        else
+            echo 'Warnung: Schriftinstallation fehlgeschlagen.' >&2
+        fi
+    fi
+
     printf '\nInstallation abgeschlossen.\nNeue Bash öffnen oder: source ~/.bashrc\n'
 }
 

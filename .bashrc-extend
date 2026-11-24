@@ -77,12 +77,12 @@ flyline create-prompt-widget mouse-mode --name MOUSE_MODE 'ON ' 'OFF'
 
 # Dynamic Linux / Git icon.
 flyline create-prompt-widget custom --name GIT_ICON \
-    --command 'if git rev-parse --show-toplevel >/dev/null 2>&1; then printf "%s" ""; else printf "%s" ""; fi' \
+    --command "bash -c 'if git rev-parse --show-toplevel >/dev/null 2>&1; then printf ; else printf ; fi'" \
     --block 100
 
-# Git branch information. Keep the widget empty if the helper is missing.
+# Git branch information.
 flyline create-prompt-widget custom --name GIT_BRANCH \
-    --command 'if [ -x "$HOME/.local/bin/flyline-git-branch" ]; then "$HOME/.local/bin/flyline-git-branch"; fi' \
+    --command "bash -c 'if git rev-parse --show-toplevel >/dev/null 2>&1; then \"\$HOME/.local/bin/flyline-git-branch\"; fi'" \
     --block 150
 
 # Left prompt: Linux/Git icon, branch and current directory.
