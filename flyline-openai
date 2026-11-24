@@ -9,10 +9,8 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 fi
 
 # Load configuration only inside this process.
-set -a
 # shellcheck disable=SC1090
 source "$CONFIG_FILE"
-set +a
 
 : "${FLYLINE_AI_BASE_URL:?FLYLINE_AI_BASE_URL is not configured}"
 : "${FLYLINE_AI_API_KEY:?FLYLINE_AI_API_KEY is not configured}"
@@ -21,7 +19,10 @@ set +a
 prompt="${1:?Missing prompt}"
 
 response="$(
-    curl --fail --silent --show-error \
+    curl \
+    --connect-timeout 10 \
+    --max-time 60 \
+    --fail --silent --show-error \
         "${FLYLINE_AI_BASE_URL%/}/chat/completions" \
         -H "Authorization: Bearer ${FLYLINE_AI_API_KEY}" \
         -H "Content-Type: application/json" \

@@ -5,7 +5,7 @@ main() {
     BASE_URL="https://raw.githubusercontent.com/g0nd1/bashing/main"
     BIN_DIR="$HOME/.local/bin"
     LIB_DIR="$HOME/.local/lib/bash"
-    CONFIG_DIR="$HOME/.config"
+    CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
     ENV_FILE="$CONFIG_DIR/flyline-ai.env"
     export PATH="$HOME/.cargo/bin:$PATH"
 

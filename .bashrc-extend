@@ -1,0 +1,121 @@
+# =====================================================================
+# .bashrc-extend
+# General Bash configuration and Flyline integration
+# =====================================================================
+
+# Only configure interactive Bash sessions.
+[[ $- == *i* ]] || return 0
+
+# ---------------------------------------------------------------------
+# General tuning
+# ---------------------------------------------------------------------
+
+# Add user-local executables without duplicating PATH entries.
+case ":$PATH:" in
+    *":$HOME/.cargo/bin:"*) ;;
+    *) PATH="$HOME/.cargo/bin:$PATH" ;;
+esac
+case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) PATH="$HOME/.local/bin:$PATH" ;;
+esac
+export PATH
+
+# GNU ls colors.
+if command -v dircolors >/dev/null 2>&1; then
+    eval "$(dircolors -b)"
+fi
+alias ls='ls --color=auto'
+
+# Prefer lsd when available, otherwise use standard ls.
+if command -v lsd >/dev/null 2>&1; then
+    alias dir='lsd -lh --color=auto'
+    alias d='lsd -lh --color=auto'
+else
+    alias dir='ls -lh --color=auto'
+    alias d='ls -lh --color=auto'
+fi
+alias c='clear'
+alias e='exit'
+
+# Enable programmable completion and load bash-completion only if needed.
+shopt -s progcomp
+if ! declare -p BASH_COMPLETION_VERSINFO >/dev/null 2>&1 &&
+   ! declare -F _completion_loader >/dev/null 2>&1 &&
+   ! declare -F _comp_load >/dev/null 2>&1; then
+    if [[ -r /usr/share/bash-completion/bash_completion ]]; then
+        . /usr/share/bash-completion/bash_completion
+    elif [[ -r /etc/bash_completion ]]; then
+        . /etc/bash_completion
+    fi
+fi
+
+# Show only the last three directory components in the prompt.
+PROMPT_DIRTRIM=3
+
+# Terminal-specific settings require an actual terminal.
+[[ -t 0 && -t 1 && ${TERM:-dumb} != dumb ]] || return 0
+
+# Disable XON/XOFF so Ctrl+S and Ctrl+Q remain available to applications.
+if command -v stty >/dev/null 2>&1; then
+    stty -ixon 2>/dev/null || :
+fi
+
+# ---------------------------------------------------------------------
+# Flyline
+# ---------------------------------------------------------------------
+
+# Load the Bash builtin from the same path used by the installer.
+if ! builtin enable flyline 2>/dev/null &&
+   ! builtin enable -f "$HOME/.local/lib/bash/libflyline.so" flyline 2>/dev/null; then
+    printf 'Flyline: unable to load the Bash extension.\n' >&2
+    return 0
+fi
+
+# Mouse mode indicator.
+flyline create-prompt-widget mouse-mode --name MOUSE_MODE 'ON ' 'OFF'
+
+# Dynamic Linux / Git icon.
+flyline create-prompt-widget custom --name GIT_ICON \
+    --command 'if git rev-parse --show-toplevel >/dev/null 2>&1; then printf "%s" ""; else printf "%s" ""; fi' \
+    --block 100
+
+# Git branch information. Keep the widget empty if the helper is missing.
+flyline create-prompt-widget custom --name GIT_BRANCH \
+    --command 'if [ -x "$HOME/.local/bin/flyline-git-branch" ]; then "$HOME/.local/bin/flyline-git-branch"; fi' \
+    --block 150
+
+# Left prompt: Linux/Git icon, branch and current directory.
+PS1='\e[48;2;252;252;252m\e[38;2;35;38;39m GIT_ICON GIT_BRANCH\e[48;2;29;153;243m\e[38;2;252;252;252m \w \e[49m\e[38;2;29;153;243m\e[0m '
+
+# Right prompt: mouse mode, last exit status and current time.
+RPS1='MOUSE_MODE $(s=$?; if (( s == 0 )); then printf "\e[38;2;26;175;23m✓\e[0m"; else printf "\e[38;2;220;50;47m✗ %d\e[0m" "$s"; fi) \e[38;2;252;252;252m\e[48;2;252;252;252m\e[38;2;35;38;39m \t \e[0m'
+
+# List the current directory when Enter is pressed on an empty buffer.
+flyline_list_current_directory() {
+    printf '\n'
+    if command -v lsd >/dev/null 2>&1; then
+        command lsd -lh --color=auto
+    else
+        command ls -lh --color=auto
+    fi
+}
+
+flyline key bind Enter \
+    'editingBufferMode+bufferIsEmpty=runBashCommand(flyline_list_current_directory)'
+
+# Generate shell completions on demand using flycomp.
+flyline key bind F8 'editingBufferMode=runFlycomp'
+
+# ---------------------------------------------------------------------
+# AI agent integration
+# ---------------------------------------------------------------------
+
+# The helper loads its own configuration.
+# Never source API credentials here.
+if [[ -x "$HOME/.local/bin/flyline-openai" ]]; then
+    flyline set-agent-mode \
+        --system-prompt 'Be concise. Answer with a JSON array of at most 3 items with objects containing: command and description. Command will be a Bash command.' \
+        --trigger-prefix 'ai: ' \
+        --command "$HOME/.local/bin/flyline-openai"
+fi
